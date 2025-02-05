@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <iomanip>
 
 class BitcoinExchange
 {
@@ -16,9 +17,11 @@ class BitcoinExchange
         BitcoinExchange(std::string filename);
         ~BitcoinExchange();
 
-        void updateExchangeRate(std::string date, double rate);
-        double getExchangeRate(std::string date);
+        void updateExchangeRate(const std::string &date, double rate);
+        double getExchangeRate(const std::string &date) const;
         void updateFromFile();
+        bool isValidDate(const std::string &date) const;
+        bool isValidValue(double value) const;
 };
 
 #endif

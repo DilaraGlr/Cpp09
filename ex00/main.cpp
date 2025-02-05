@@ -4,52 +4,56 @@ int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        std::cerr << "Error: wrong number of arguments." << std::endl;
+        std::cerr << "Error: wrong number of arguments" << std::endl;
         return 1;
     }
 
-    BitcoinExchange btc("data.csv");
-
-    std::ifstream inputFile(argv[1]);
-    if (!inputFile)
+    try
     {
-        std::cerr << "Error: could not open input file." << std::endl;
-        return 1;
+        BitcoinExchange exchange(argv[1]);
+
+        std::ifstream input_file(argv[1]);
+        std::string line;
+
+        if (!input_file.is_open())
+        {
+            std::cerr << "Error: could not open input file" << std::endl;
+            return 1;
+        }
+
+        std::cout << std::fixed << std::setprecision(2);
+
+        while (std::getline(input_file, line))
+        {
+            std::istringstream iss(line);
+            std::string date, separator;
+            double value;
+
+            if (!(iss >> date >> separator >> value) || separator != "|")
+            {
+                std::cerr << "Error: Invalid line format => " << line << std::endl;
+                continue;
+            }
+
+            if (!exchange.isValidDate(date))
+            {
+                std::cerr << "Error: Invalid date format => " << line << std::endl;
+                continue;
+            }
+
+            if (!exchange.isValidValue(value))
+            {
+                continue;
+            }
+
+            double rate = exchange.getExchangeRate(date);
+            std::cout << date << " => " << value << " = " << rate * value << std::endl;
+        }
     }
-
-    std::string line;
-    std::getline(inputFile, line); // Ignore la première ligne
-
-    while (std::getline(inputFile, line))
+    catch (const std::exception &e)
     {
-        std::istringstream iss(line);
-        std::string date, valueStr;
-        double value;
-
-        if (std::getline(iss, date, '|') && std::getline(iss, valueStr))
-        {
-            try
-            {
-                value = std::stod(valueStr);
-                if (value < 0 || value > 1000)
-                {
-                    std::cerr << "Error: value out of range for " << date << std::endl;
-                    continue;
-                }
-
-                double exchangeRate = btc.getExchangeRate(date);
-                if (exchangeRate != -1)
-                    std::cout << date << " => " << value << " = " << (value * exchangeRate) << std::endl;
-            }
-            catch (std::exception &e)
-            {
-                std::cerr << "Error: invalid input at " << date << std::endl;
-            }
-        }
-        else
-        {
-            std::cerr << "Error: bad input => " << line << std::endl;
-        }
+        std::cerr << e.what() << std::endl;
+        return 1;
     }
 
     return 0;

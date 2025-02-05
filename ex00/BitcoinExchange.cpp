@@ -1,71 +1,79 @@
 #include "BitcoinExchange.hpp"
 
-BitcoinExchange::BitcoinExchange(std::string filename) : _filename(filename)
-{
+BitcoinExchange::BitcoinExchange(std::string filename) : _filename(filename) {
     updateFromFile();
 }
 
-BitcoinExchange::~BitcoinExchange()
-{
-    // Pas besoin de saveToFile() car le fichier "data.csv" est en lecture seule.
-}
+BitcoinExchange::~BitcoinExchange() {}
 
-void BitcoinExchange::updateExchangeRate(std::string date, double rate)
-{
+void BitcoinExchange::updateExchangeRate(const std::string &date, double rate) {
     _exchangeRate[date] = rate;
 }
 
-double BitcoinExchange::getExchangeRate(std::string date)
-{
-    std::map<std::string, double>::iterator it = _exchangeRate.lower_bound(date);
+double BitcoinExchange::getExchangeRate(const std::string &date) const {
+    std::map<std::string, double>::const_iterator it = _exchangeRate.lower_bound(date);
 
-    if (it == _exchangeRate.end() || it->first != date)
-    {
-        if (it == _exchangeRate.begin())
-        {
-            std::cerr << "Error: no valid exchange rate for " << date << std::endl;
-            return -1;
-        }
+    if (it == _exchangeRate.begin() && it->first != date) {
+        return 0;
+    }
+    if (it == _exchangeRate.end() || it->first != date) {
         --it;
     }
     return it->second;
 }
 
-void BitcoinExchange::updateFromFile()
-{
-    std::ifstream file(_filename);
-    std::string line;
-
-    if (!file.is_open())
-    {
-        std::cerr << "Error: could not open database file." << std::endl;
+void BitcoinExchange::updateFromFile() {
+    std::ifstream file(_filename.c_str());
+    if (!file) {
+        std::cerr << "Error: could not open file." << std::endl;
         return;
     }
 
-    std::getline(file, line); // Ignore la première ligne (en-tête)
-
-    while (std::getline(file, line))
-    {
+    std::string line;
+    while (std::getline(file, line)) {
         std::istringstream iss(line);
-        std::string date, valueStr;
-        double rate;
+        std::string date, separator;
+        double value;
 
-        if (std::getline(iss, date, ',') && std::getline(iss, valueStr))
-        {
-            try
-            {
-                rate = std::stod(valueStr);
-                if (rate < 0)
-                {
-                    std::cerr << "Error: negative exchange rate at " << date << std::endl;
-                    continue;
-                }
-                updateExchangeRate(date, rate);
-            }
-            catch (std::exception &e)
-            {
-                std::cerr << "Error: invalid number format at " << date << std::endl;
-            }
+        // Vérification stricte du format "YYYY-MM-DD | VALUE"
+        if (!(iss >> date >> separator >> value) || separator != "|") {
+            std::cerr << "Error: Invalid line format => " << line << std::endl;
+            continue;
         }
+
+        if (!isValidDate(date) || !isValidValue(value)) {
+            continue;
+        }
+
+        updateExchangeRate(date, value);
     }
+    file.close();
+}
+
+// Vérifie si la date est valide (format YYYY-MM-DD)
+bool BitcoinExchange::isValidDate(const std::string &date) const {
+    if (date.size() != 10 || date[4] != '-' || date[7] != '-')
+        return false;
+
+    int year, month, day;
+    char dash1, dash2;
+    std::istringstream iss(date);
+    if (!(iss >> year >> dash1 >> month >> dash2 >> day) || dash1 != '-' || dash2 != '-')
+        return false;
+    if (month < 1 || month > 12 || day < 1 || day > 31)
+        return false;
+    return true;
+}
+
+// Vérifie si la valeur est valide (nombre positif et <= 1000)
+bool BitcoinExchange::isValidValue(double value) const {
+    if (value < 0) {
+        std::cerr << "Error: Not a positive number => " << value << std::endl;
+        return false;
+    }
+    if (value > 1000) {
+        std::cerr << "Error: Int must be between [0-1000] => " << std::fixed << std::setprecision(2) << value << std::endl;
+        return false;
+    }
+    return true;
 }
