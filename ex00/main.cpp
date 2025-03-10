@@ -2,59 +2,71 @@
 
 int main(int argc, char **argv)
 {
+    // Vérifie que le fichier d'entrée est fourni
     if (argc != 2)
     {
-        std::cerr << "Error: wrong number of arguments" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <input_file>" << std::endl;
         return 1;
     }
 
-    try
+    // Crée une instance de BitcoinExchange avec le fichier CSV
+    BitcoinExchange btc("data.csv");
+
+    // Ouvre le fichier d'entrée
+    std::ifstream inputFile(argv[1]);
+    if (!inputFile)
     {
-        BitcoinExchange exchange(argv[1]);
-
-        std::ifstream input_file(argv[1]);
-        std::string line;
-
-        if (!input_file.is_open())
-        {
-            std::cerr << "Error: could not open input file" << std::endl;
-            return 1;
-        }
-
-        std::cout << std::fixed << std::setprecision(2);
-
-        while (std::getline(input_file, line))
-        {
-            std::istringstream iss(line);
-            std::string date, separator;
-            double value;
-
-            if (!(iss >> date >> separator >> value) || separator != "|")
-            {
-                std::cerr << "Error: Invalid line format => " << line << std::endl;
-                continue;
-            }
-
-            if (!exchange.isValidDate(date))
-            {
-                std::cerr << "Error: Invalid date format => " << line << std::endl;
-                continue;
-            }
-
-            if (!exchange.isValidValue(value))
-            {
-                continue;
-            }
-
-            double rate = exchange.getExchangeRate(date);
-            std::cout << date << " => " << value << " = " << rate * value << std::endl;
-        }
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "Error: could not open file " << argv[1] << std::endl;
         return 1;
     }
 
+    std::string line;
+
+    // Vérifie la première ligne (en-tête)
+    if (!std::getline(inputFile, line) || line != "date | value")
+    {
+        std::cerr << "Error: invalid input header => " << line << std::endl;
+        inputFile.close();
+        return 1;
+    }
+
+    // Traite chaque ligne du fichier d'entrée
+    while (std::getline(inputFile, line))
+    {
+        std::istringstream iss(line);
+        std::string date, separator;
+        double value;
+
+        // Vérifie le format "date | valeur"
+        if (!(iss >> date >> separator >> value) || separator != "|")
+        {
+            std::cerr << "Error: bad input => " << line << std::endl;
+            continue;
+        }
+
+        // Vérifie si la date et la valeur sont valides
+        if (!btc.isValidDate(date))
+        {
+            std::cerr << "Error: invalid date => " << date << std::endl;
+            continue;
+        }
+        if (!btc.isValidValue(value))
+        {
+            continue;
+        }
+
+        // Récupère le taux de change pour la date donnée
+        double rate = btc.getExchangeRate(date);
+        if (rate == 0)
+        {
+            std::cerr << "Error: no exchange rate found for date " << date << std::endl;
+            continue;
+        }
+
+        // Affiche le résultat
+        std::cout << date << " => " << std::fixed << std::setprecision(2) << value << " = " << value * rate << std::endl;
+    }
+
+    inputFile.close();
     return 0;
 }
