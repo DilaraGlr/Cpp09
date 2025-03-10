@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
+#include <iomanip>  // Pour la précision décimale
 
 // Constructeur
 PmergeMe::PmergeMe() {}
@@ -49,28 +50,28 @@ void PmergeMe::mergeInsertSortVector(std::vector<int> &v)
     if (v.size() <= 1)
         return;
     
-    std::vector<int> left(v.begin(), v.begin() + v.size() / 2);
-    std::vector<int> right(v.begin() + v.size() / 2, v.end());
+    std::vector<int> left(v.begin(), v.begin() + v.size() / 2); // On divise le vecteur en deux
+    std::vector<int> right(v.begin() + v.size() / 2, v.end()); 
 
-    mergeInsertSortVector(left);
+    mergeInsertSortVector(left); // On trie les deux parties
     mergeInsertSortVector(right);
     
-    mergeVector(v, left, right);
+    mergeVector(v, left, right); // On fusionne les deux parties
 }
 
-// Fonction de fusion pour vector
+// Fonction de fusion pour vector (ex: [2] [] => [1, 2])
 void PmergeMe::mergeVector(std::vector<int> &v, std::vector<int> &left, std::vector<int> &right) 
 {
     size_t i = 0, j = 0, k = 0;
 
     while (i < left.size() && j < right.size()) 
     {
-        if (left[i] < right[j])
+        if (left[i] < right[j]) // On compare les éléments des deux parties
             v[k++] = left[i++];
-        else
+        else 
             v[k++] = right[j++];
     }
-    while (i < left.size()) v[k++] = left[i++];
+    while (i < left.size()) v[k++] = left[i++]; // On ajoute les éléments restants
     while (j < right.size()) v[k++] = right[j++];
 }
 
@@ -118,18 +119,22 @@ void PmergeMe::sortAndMeasureTime()
     start = std::clock();
     mergeInsertSortVector(vec);
     end = std::clock();
-    timeVector = 1000000.0 * (end - start) / CLOCKS_PER_SEC;
+    timeVector = 1000.0 * (end - start) / CLOCKS_PER_SEC; // Conversion en microsecondes
 
     std::cout << "After: ";
     printVector();
 
-    std::cout << "Time to process " << vec.size() << " elements with std::vector: " << timeVector << " us" << std::endl;
+    // Affichage du temps avec une précision décimale
+    std::cout << "Time to process " << vec.size() << " elements with std::vector: ";
+    std::cout << std::fixed << std::setprecision(5) << timeVector << " ms" << std::endl;
 
     // Mesure du temps pour le deque
     start = std::clock();
     mergeInsertSortDeque(deq);
     end = std::clock();
-    timeDeque = 1000000.0 * (end - start) / CLOCKS_PER_SEC;
+    timeDeque = 1000.0 * (end - start) / CLOCKS_PER_SEC;
 
-    std::cout << "Time to process " << deq.size() << " elements with std::deque: " << timeDeque << " us" << std::endl;
+    // Affichage du temps avec une précision décimale
+    std::cout << "Time to process " << deq.size() << " elements with std::deque: ";
+    std::cout << std::fixed << std::setprecision(5) << timeDeque << " ms" << std::endl;
 }
