@@ -2,10 +2,24 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
-#include <iomanip>  // Pour la précision décimale
+#include <iomanip> 
 
-// Constructeur
+// Constructeur par défaut
 PmergeMe::PmergeMe() {}
+
+// Constructeur par copie
+PmergeMe::PmergeMe(const PmergeMe &other) : vec(other.vec), deq(other.deq) {}
+
+// Opérateur d'affectation
+PmergeMe &PmergeMe::operator=(const PmergeMe &other) 
+{
+    if (this != &other) 
+    {
+        vec = other.vec;
+        deq = other.deq;
+    }
+    return *this;
+}
 
 // Destructeur
 PmergeMe::~PmergeMe() {}

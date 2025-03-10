@@ -2,14 +2,26 @@
 
 RPN::RPN(const std::string& expr) : expression(expr) {}
 
+RPN::RPN(const RPN& other) : stack(other.stack), expression(other.expression) {}
+
+RPN& RPN::operator=(const RPN& other) 
+{
+    if (this != &other) 
+    {
+        expression = other.expression;
+        stack = other.stack;
+    }
+    return *this;
+}
+
 RPN::~RPN() {}
 
-bool RPN::isOperator(const std::string& token) 
+bool RPN::isOperator(const std::string& token) const 
 {
     return (token == "+" || token == "-" || token == "*" || token == "/");
 }
 
-int RPN::applyOperation(const std::string& op, int a, int b) 
+int RPN::applyOperation(const std::string& op, int a, int b) const 
 {
     if (op == "+") return a + b;
     if (op == "-") return a - b;
@@ -23,7 +35,7 @@ int RPN::applyOperation(const std::string& op, int a, int b)
         }
         return a / b;
     }
-    return 0; // Ne devrait jamais arriver
+    return 0;
 }
 
 int RPN::evaluate() 
@@ -33,8 +45,8 @@ int RPN::evaluate()
 
     while (iss >> token) // On lit chaque token
     {
-        if (isdigit(token[0])) 
-        { // Si c'est un nombre, on l'empile
+        if (isdigit(token[0]) || (token.length() > 1 && token[0] == '-' && isdigit(token[1]))) 
+        { // Si c'est un nombre (y compris négatif), on l'empile
             stack.push(std::atoi(token.c_str()));
         } 
         else if (isOperator(token))

@@ -19,6 +19,8 @@ class PmergeMe
     public:
         PmergeMe();
         ~PmergeMe();
+        PmergeMe(const PmergeMe &other);
+        PmergeMe &operator=(const PmergeMe &other);
 
         bool parseArgs(int argc, char **argv);
         void sortAndMeasureTime();

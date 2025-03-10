@@ -1,15 +1,38 @@
 #include "BitcoinExchange.hpp"
 
-// Constructeur
+// Constructeur par défaut
+BitcoinExchange::BitcoinExchange() : _filename("")
+{
+}
+
+// Constructeur avec paramètre
 BitcoinExchange::BitcoinExchange(std::string filename) : _filename(filename)
 {
     updateFromFile();
+}
+
+// Constructeur de copie
+BitcoinExchange::BitcoinExchange(const BitcoinExchange &other)
+{
+    *this = other; // Utilise l'opérateur d'affectation
 }
 
 // Destructeur
 BitcoinExchange::~BitcoinExchange()
 {
 }
+
+// Opérateur d'affectation
+BitcoinExchange &BitcoinExchange::operator=(const BitcoinExchange &other)
+{
+    if (this != &other) // Vérifie l'auto-affectation
+    {
+        _filename = other._filename;
+        _exchangeRate = other._exchangeRate; // Copie la map
+    }
+    return *this;
+}
+
 
 // Met à jour le taux de change pour une date donnée
 void BitcoinExchange::updateExchangeRate(const std::string &date, double rate)

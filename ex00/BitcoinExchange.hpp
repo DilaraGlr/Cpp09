@@ -14,9 +14,22 @@ private:
     std::string _filename;
 
 public:
+    // Constructeur par défaut
+    BitcoinExchange();
+
+    // Constructeur avec paramètre
     BitcoinExchange(std::string filename);
+
+    // Constructeur de copie
+    BitcoinExchange(const BitcoinExchange &other);
+
+    // Destructeur
     ~BitcoinExchange();
 
+    // Opérateur d'affectation
+    BitcoinExchange &operator=(const BitcoinExchange &other);
+
+    // Méthodes publiques
     void updateExchangeRate(const std::string &date, double rate);
     double getExchangeRate(const std::string &date) const;
     void updateFromFile();
