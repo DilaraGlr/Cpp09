@@ -10,11 +10,8 @@ class PmergeMe
         std::vector<int> vec; // Vecteur d'entiers
         std::deque<int> deq; // Deque d'entiers
 
-        void mergeInsertSortVector(std::vector<int> &v); 
-        void mergeVector(std::vector<int> &v, std::vector<int> &left, std::vector<int> &right);//
-
-        void mergeInsertSortDeque(std::deque<int> &d); 
-        void mergeDeque(std::deque<int> &d, std::deque<int> &left, std::deque<int> &right);
+        void fordJohnsonSortVector(std::vector<int> &v); 
+        void fordJohnsonSortDeque(std::deque<int> &d);
 
     public:
         PmergeMe();

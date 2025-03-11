@@ -2,18 +2,18 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
-#include <iomanip> 
+#include <iomanip>
+#include <vector>
+#include <deque>
+#include <algorithm> 
 
-// Constructeur par défaut
 PmergeMe::PmergeMe() {}
 
-// Constructeur par copie
 PmergeMe::PmergeMe(const PmergeMe &other) : vec(other.vec), deq(other.deq) {}
 
-// Opérateur d'affectation
-PmergeMe &PmergeMe::operator=(const PmergeMe &other) 
+PmergeMe &PmergeMe::operator=(const PmergeMe &other)
 {
-    if (this != &other) 
+    if (this != &other)
     {
         vec = other.vec;
         deq = other.deq;
@@ -21,17 +21,16 @@ PmergeMe &PmergeMe::operator=(const PmergeMe &other)
     return *this;
 }
 
-// Destructeur
 PmergeMe::~PmergeMe() {}
 
-// Fonction pour parser les arguments et remplir les conteneurs
-bool PmergeMe::parseArgs(int argc, char **argv) 
+// Parse les arguments et stocke les valeurs dans les structures de données
+bool PmergeMe::parseArgs(int argc, char **argv)
 {
-    for (int i = 1; i < argc; i++) 
+    for (int i = 1; i < argc; i++)
     {
         std::istringstream iss(argv[i]);
         int num;
-        if (!(iss >> num) || num < 0) 
+        if (!(iss >> num) || num < 0)
         {
             std::cerr << "Error: Invalid input => " << argv[i] << std::endl;
             return false;
@@ -42,86 +41,193 @@ bool PmergeMe::parseArgs(int argc, char **argv)
     return true;
 }
 
-// Afficher le contenu d'un conteneur (vector)
-void PmergeMe::printVector() const 
+// Affiche les éléments du vecteur
+void PmergeMe::printVector() const
 {
     for (size_t i = 0; i < vec.size(); i++)
+    {
         std::cout << vec[i] << " ";
+    }
     std::cout << std::endl;
 }
 
-// Afficher le contenu d'un conteneur (deque)
-void PmergeMe::printDeque() const 
+// Affiche les éléments de la deque
+void PmergeMe::printDeque() const
 {
     for (size_t i = 0; i < deq.size(); i++)
+    {
         std::cout << deq[i] << " ";
+    }
     std::cout << std::endl;
 }
 
-// Tri Merge-Insertion (Version Vector)
-void PmergeMe::mergeInsertSortVector(std::vector<int> &v) 
+// Tri Ford-Johnson (Merge-Insertion Sort) - Version Vector
+void PmergeMe::fordJohnsonSortVector(std::vector<int> &v)
 {
     if (v.size() <= 1)
-        return;
-    
-    std::vector<int> left(v.begin(), v.begin() + v.size() / 2); // On divise le vecteur en deux
-    std::vector<int> right(v.begin() + v.size() / 2, v.end()); 
-
-    mergeInsertSortVector(left); // On trie les deux parties
-    mergeInsertSortVector(right);
-    
-    mergeVector(v, left, right); // On fusionne les deux parties
-}
-
-// Fonction de fusion pour vector (ex: [2] [] => [1, 2])
-void PmergeMe::mergeVector(std::vector<int> &v, std::vector<int> &left, std::vector<int> &right) 
-{
-    size_t i = 0, j = 0, k = 0;
-
-    while (i < left.size() && j < right.size()) 
     {
-        if (left[i] < right[j]) // On compare les éléments des deux parties
-            v[k++] = left[i++];
-        else 
-            v[k++] = right[j++];
+        return;
     }
-    while (i < left.size()) v[k++] = left[i++]; // On ajoute les éléments restants
-    while (j < right.size()) v[k++] = right[j++];
+
+    // Étape 1: Créer des paires et les trier localement
+    std::vector<std::pair<int, int> > pairs;
+    for (size_t i = 0; i + 1 < v.size(); i += 2)
+    {
+        if (v[i] < v[i + 1])
+        {
+            pairs.push_back(std::make_pair(v[i], v[i + 1]));
+        }
+        else
+        {
+            pairs.push_back(std::make_pair(v[i + 1], v[i]));
+        }
+    }
+
+    // Étape 2: Trier les paires en fonction du premier élément (le plus petit)
+    for (size_t i = 0; i < pairs.size(); i++)
+    {
+        for (size_t j = i + 1; j < pairs.size(); j++)
+        {
+            if (pairs[i].first > pairs[j].first)
+            {
+                std::pair<int, int> temp = pairs[i];
+                pairs[i] = pairs[j];
+                pairs[j] = temp;
+            }
+        }
+    }
+
+    // Étape 3: Créer une séquence triée avec les premiers éléments de chaque paire
+    std::vector<int> sorted;
+    for (size_t i = 0; i < pairs.size(); i++)
+    {
+        sorted.push_back(pairs[i].first);
+    }
+
+    // Étape 4: Insérer les seconds éléments de chaque paire dans la séquence triée
+    for (size_t i = 0; i < pairs.size(); i++)
+    {
+        int value = pairs[i].second;
+        size_t left = 0;
+        size_t right = sorted.size();
+        while (left < right)
+        {
+            size_t mid = left + (right - left) / 2;
+            if (sorted[mid] < value)
+            {
+                left = mid + 1;
+            }
+            else
+            {
+                right = mid;
+            }
+        }
+        sorted.insert(sorted.begin() + left, value);
+    }
+
+    // Étape 5: Ajouter l'élément impair s'il existe
+    if (v.size() % 2 == 1)
+    {
+        int lastElement = v.back();
+        size_t left = 0;
+        size_t right = sorted.size();
+        while (left < right)
+        {
+            size_t mid = left + (right - left) / 2;
+            if (sorted[mid] < lastElement)
+            {
+                left = mid + 1;
+            }
+            else
+            {
+                right = mid;
+            }
+        }
+        sorted.insert(sorted.begin() + left, lastElement);
+    }
+
+    v = sorted; // Remplacer le vecteur original par le trié
 }
 
-// Tri Merge-Insertion (Version Deque)
-void PmergeMe::mergeInsertSortDeque(std::deque<int> &d) 
+// Tri Ford-Johnson (Merge-Insertion Sort) - Version Deque
+void PmergeMe::fordJohnsonSortDeque(std::deque<int> &d)
 {
     if (d.size() <= 1)
-        return;
-    
-    std::deque<int> left(d.begin(), d.begin() + d.size() / 2);
-    std::deque<int> right(d.begin() + d.size() / 2, d.end());
-
-    mergeInsertSortDeque(left);
-    mergeInsertSortDeque(right);
-    
-    mergeDeque(d, left, right);
-}
-
-// Fonction de fusion pour deque
-void PmergeMe::mergeDeque(std::deque<int> &d, std::deque<int> &left, std::deque<int> &right) 
-{
-    size_t i = 0, j = 0, k = 0;
-
-    while (i < left.size() && j < right.size()) 
     {
-        if (left[i] < right[j])
-            d[k++] = left[i++];
-        else
-            d[k++] = right[j++];
+        return;
     }
-    while (i < left.size()) d[k++] = left[i++];
-    while (j < right.size()) d[k++] = right[j++];
+
+    // Étape 1: Créer des paires et les trier localement
+    std::deque<std::pair<int, int> > pairs;
+    for (size_t i = 0; i + 1 < d.size(); i += 2)
+    {
+        if (d[i] < d[i + 1])
+        {
+            pairs.push_back(std::make_pair(d[i], d[i + 1]));
+        }
+        else
+        {
+            pairs.push_back(std::make_pair(d[i + 1], d[i]));
+        }
+    }
+
+    // Étape 2: Trier les paires en fonction du premier élément (le plus petit)
+    std::sort(pairs.begin(), pairs.end());
+
+    // Étape 3: Créer une séquence triée avec les premiers éléments de chaque paire
+    std::deque<int> sorted;
+    for (size_t i = 0; i < pairs.size(); i++)
+    {
+        sorted.push_back(pairs[i].first);
+    }
+
+    // Étape 4: Insérer les seconds éléments de chaque paire dans la séquence triée
+    for (size_t i = 0; i < pairs.size(); i++)
+    {
+        int value = pairs[i].second;
+        size_t left = 0;
+        size_t right = sorted.size();
+        while (left < right)
+        {
+            size_t mid = left + (right - left) / 2;
+            if (sorted[mid] < value)
+            {
+                left = mid + 1;
+            }
+            else
+            {
+                right = mid;
+            }
+        }
+        sorted.insert(sorted.begin() + left, value);
+    }
+
+    // Étape 5: Ajouter l'élément impair s'il existe
+    if (d.size() % 2 == 1)
+    {
+        int lastElement = d.back();
+        size_t left = 0;
+        size_t right = sorted.size();
+        while (left < right)
+        {
+            size_t mid = left + (right - left) / 2;
+            if (sorted[mid] < lastElement)
+            {
+                left = mid + 1;
+            }
+            else
+            {
+                right = mid;
+            }
+        }
+        sorted.insert(sorted.begin() + left, lastElement);
+    }
+
+    d = sorted; // Remplacer la deque originale par le trié
 }
 
-// Fonction principale qui exécute le tri et affiche les résultats
-void PmergeMe::sortAndMeasureTime() 
+// Trie et mesure le temps d'exécution pour le vecteur et la deque
+void PmergeMe::sortAndMeasureTime()
 {
     std::clock_t start, end;
     double timeVector, timeDeque;
@@ -129,26 +235,19 @@ void PmergeMe::sortAndMeasureTime()
     std::cout << "Before: ";
     printVector();
 
-    // Mesure du temps pour le vector
     start = std::clock();
-    mergeInsertSortVector(vec);
+    fordJohnsonSortVector(vec);
     end = std::clock();
-    timeVector = 1000.0 * (end - start) / CLOCKS_PER_SEC; // Conversion en microsecondes
+    timeVector = 1000.0 * (end - start) / CLOCKS_PER_SEC;
 
     std::cout << "After: ";
     printVector();
+    std::cout << "Time to process a range of " << vec.size() << " elements with std::vector: " << std::fixed << std::setprecision(5) << timeVector << " us" << std::endl;
 
-    // Affichage du temps avec une précision décimale
-    std::cout << "Time to process " << vec.size() << " elements with std::vector: ";
-    std::cout << std::fixed << std::setprecision(5) << timeVector << " ms" << std::endl;
-
-    // Mesure du temps pour le deque
     start = std::clock();
-    mergeInsertSortDeque(deq);
+    fordJohnsonSortDeque(deq);
     end = std::clock();
     timeDeque = 1000.0 * (end - start) / CLOCKS_PER_SEC;
 
-    // Affichage du temps avec une précision décimale
-    std::cout << "Time to process " << deq.size() << " elements with std::deque: ";
-    std::cout << std::fixed << std::setprecision(5) << timeDeque << " ms" << std::endl;
+    std::cout << "Time to process a range of " << deq.size() << " elements with std::deque: " << std::fixed << std::setprecision(5) << timeDeque << " us" << std::endl;
 }
