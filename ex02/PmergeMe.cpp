@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <vector>
 #include <deque>
-#include <algorithm> 
+#include <algorithm> // Pour std::sort
 
 PmergeMe::PmergeMe() {}
 
@@ -61,6 +61,12 @@ void PmergeMe::printDeque() const
     std::cout << std::endl;
 }
 
+// Fonction de comparaison pour trier les paires
+bool comparePairs(const std::pair<int, int> &a, const std::pair<int, int> &b)
+{
+    return a.first < b.first;
+}
+
 // Tri Ford-Johnson (Merge-Insertion Sort) - Version Vector
 void PmergeMe::fordJohnsonSortVector(std::vector<int> &v)
 {
@@ -84,18 +90,7 @@ void PmergeMe::fordJohnsonSortVector(std::vector<int> &v)
     }
 
     // Étape 2: Trier les paires en fonction du premier élément (le plus petit)
-    for (size_t i = 0; i < pairs.size(); i++)
-    {
-        for (size_t j = i + 1; j < pairs.size(); j++)
-        {
-            if (pairs[i].first > pairs[j].first)
-            {
-                std::pair<int, int> temp = pairs[i];
-                pairs[i] = pairs[j];
-                pairs[j] = temp;
-            }
-        }
-    }
+    std::sort(pairs.begin(), pairs.end(), comparePairs);
 
     // Étape 3: Créer une séquence triée avec les premiers éléments de chaque paire
     std::vector<int> sorted;
@@ -172,7 +167,7 @@ void PmergeMe::fordJohnsonSortDeque(std::deque<int> &d)
     }
 
     // Étape 2: Trier les paires en fonction du premier élément (le plus petit)
-    std::sort(pairs.begin(), pairs.end());
+    std::sort(pairs.begin(), pairs.end(), comparePairs);
 
     // Étape 3: Créer une séquence triée avec les premiers éléments de chaque paire
     std::deque<int> sorted;
