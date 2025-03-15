@@ -226,23 +226,34 @@ void PmergeMe::sortAndMeasureTime()
 {
     std::clock_t start, end;
     double timeVector, timeDeque;
+    const int iterations = 1000; // Nombre d'itérations
 
     std::cout << "Before: ";
     printVector();
 
+    // Mesure du temps pour std::vector
     start = std::clock();
-    fordJohnsonSortVector(vec);
+    for (int i = 0; i < iterations; i++)
+    {
+        std::vector<int> vecCopy = vec; // Copie du vecteur pour ne pas modifier l'original
+        fordJohnsonSortVector(vecCopy);
+    }
     end = std::clock();
-    timeVector = 1000.0 * (end - start) / CLOCKS_PER_SEC;
+    timeVector = 1000000.0 * (end - start) / CLOCKS_PER_SEC / iterations; // Temps moyen en microsecondes
 
     std::cout << "After: ";
     printVector();
     std::cout << "Time to process a range of " << vec.size() << " elements with std::vector: " << std::fixed << std::setprecision(5) << timeVector << " us" << std::endl;
 
+    // Mesure du temps pour std::deque
     start = std::clock();
-    fordJohnsonSortDeque(deq);
+    for (int i = 0; i < iterations; i++)
+    {
+        std::deque<int> deqCopy = deq; // Copie de la deque pour ne pas modifier l'original
+        fordJohnsonSortDeque(deqCopy);
+    }
     end = std::clock();
-    timeDeque = 1000.0 * (end - start) / CLOCKS_PER_SEC;
+    timeDeque = 1000000.0 * (end - start) / CLOCKS_PER_SEC / iterations; // Temps moyen en microsecondes
 
     std::cout << "Time to process a range of " << deq.size() << " elements with std::deque: " << std::fixed << std::setprecision(5) << timeDeque << " us" << std::endl;
 }
