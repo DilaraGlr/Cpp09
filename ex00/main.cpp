@@ -22,8 +22,16 @@ int main(int argc, char **argv)
 
     std::string line;
 
+    // Vérifie si le fichier est vide
+    if (!std::getline(inputFile, line))
+    {
+        std::cerr << "Error: file is empty." << std::endl;
+        inputFile.close();
+        return 1;
+    }
+
     // Vérifie la première ligne (en-tête)
-    if (!std::getline(inputFile, line) || line != "date | value")
+    if (line != "date | value")
     {
         std::cerr << "Error: invalid input header => " << line << std::endl;
         inputFile.close();
@@ -44,12 +52,14 @@ int main(int argc, char **argv)
             continue;
         }
 
-        // Vérifie si la date et la valeur sont valides
+        // Vérifie si la date est valide
         if (!btc.isValidDate(date))
         {
             std::cerr << "Error: invalid date => " << date << std::endl;
             continue;
         }
+
+        // Vérifie si la valeur est valide
         if (!btc.isValidValue(value))
         {
             continue;

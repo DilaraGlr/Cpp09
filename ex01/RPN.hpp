@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <cstdlib>
+#include <stdexcept>
 
 class RPN 
 {
@@ -23,6 +24,20 @@ class RPN
 
         bool isOperator(const std::string& token) const; // Vérifie si c'est un opérateur
         int applyOperation(const std::string& op, int a, int b) const; // Effectue l'opération
+};
+
+// Exception personnalisée pour RPN
+class RPNException : public std::exception 
+{
+    private:
+        std::string message;
+    public:
+        RPNException(const std::string& msg) : message(msg) {}
+        virtual ~RPNException() throw() {}
+        virtual const char* what() const throw() 
+        {
+            return message.c_str();
+        }
 };
 
 #endif

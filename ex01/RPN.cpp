@@ -30,12 +30,11 @@ int RPN::applyOperation(const std::string& op, int a, int b) const
     {
         if (b == 0) 
         {
-            std::cerr << "Error: Division by zero" << std::endl;
-            exit(EXIT_FAILURE);
+            throw RPNException("Division by zero");
         }
         return a / b;
     }
-    return 0;
+    throw RPNException("Unknown operator '" + op + "'");
 }
 
 int RPN::evaluate() 
@@ -53,8 +52,7 @@ int RPN::evaluate()
         {
             if (stack.size() < 2) // On vérifie qu'il y a assez d'opérandes
             {
-                std::cerr << "Error: Invalid expression (not enough operands)" << std::endl;
-                exit(EXIT_FAILURE);
+                throw RPNException("Invalid expression (not enough operands)");
             }
             int b = stack.top(); stack.pop(); // On dépile les deux opérandes
             int a = stack.top(); stack.pop(); // dans l'ordre inverse
@@ -62,15 +60,13 @@ int RPN::evaluate()
         } 
         else 
         {
-            std::cerr << "Error: Invalid token '" << token << "'" << std::endl;
-            exit(EXIT_FAILURE);
+            throw RPNException("Invalid token '" + token + "'");
         }
     }
 
     if (stack.size() != 1) 
     {
-        std::cerr << "Error: Invalid expression (remaining elements in stack)" << std::endl;
-        exit(EXIT_FAILURE);
+        throw RPNException("Invalid expression (remaining elements in stack)");
     }
     
     return stack.top();

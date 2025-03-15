@@ -15,9 +15,14 @@ int main(int argc, char** argv)
     {
         std::cout << calculator.evaluate() << std::endl;
     } 
-    catch (const std::exception& e) 
+    catch (const RPNException& e) 
     {
         std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+    catch (const std::exception& e) 
+    {
+        std::cerr << "Unexpected error: " << e.what() << std::endl;
         return 1;
     }
 

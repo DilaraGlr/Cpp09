@@ -33,7 +33,6 @@ BitcoinExchange &BitcoinExchange::operator=(const BitcoinExchange &other)
     return *this;
 }
 
-
 // Met à jour le taux de change pour une date donnée
 void BitcoinExchange::updateExchangeRate(const std::string &date, double rate)
 {
@@ -104,23 +103,62 @@ void BitcoinExchange::updateFromFile()
 // Vérifie si la date est valide (format YYYY-MM-DD)
 bool BitcoinExchange::isValidDate(const std::string &date) const
 {
+    // Vérifie la longueur et le format de la date
     if (date.size() != 10 || date[4] != '-' || date[7] != '-')
     {
         return false;
     }
 
+    // Vérifie que les parties de la date sont bien des chiffres
+    for (size_t i = 0; i < date.size(); ++i)
+    {
+        if (i == 4 || i == 7) continue; // Ignore les tirets
+        if (!isdigit(date[i]))
+        {
+            return false;
+        }
+    }
+
     int year, month, day;
     char dash1, dash2;
     std::istringstream iss(date);
+
+    // Extrait l'année, le mois et le jour
     if (!(iss >> year >> dash1 >> month >> dash2 >> day) || dash1 != '-' || dash2 != '-')
     {
         return false;
     }
 
-    // Vérifie les limites des mois et des jours
-    if (month < 1 || month > 12 || day < 1 || day > 31)
+    // Vérifie les limites des mois
+    if (month < 1 || month > 12)
     {
         return false;
+    }
+
+    // Vérifie les limites des jours en fonction du mois
+    if (day < 1 || day > 31)
+    {
+        return false;
+    }
+
+    // Mois avec 30 jours
+    if ((month == 4 || month == 6 || month == 9 || month == 11) && day > 30)
+    {
+        return false;
+    }
+
+    // Février (gestion des années bissextiles)
+    if (month == 2)
+    {
+        bool isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+        if (isLeapYear && day > 29)
+        {
+            return false;
+        }
+        if (!isLeapYear && day > 28)
+        {
+            return false;
+        }
     }
 
     return true;
