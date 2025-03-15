@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <vector>
 #include <deque>
-#include <algorithm> // Pour std::sort
+#include <algorithm> 
 
 PmergeMe::PmergeMe() {}
 
