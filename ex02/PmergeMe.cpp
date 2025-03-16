@@ -5,16 +5,17 @@
 #include <iomanip>
 #include <vector>
 #include <deque>
-#include <algorithm> 
+#include <algorithm>
 
+// ---------------------- CONSTRUCTEURS/DESTRUCTEUR -----------------------
 PmergeMe::PmergeMe() {}
 
-PmergeMe::PmergeMe(const PmergeMe &other) : vec(other.vec), deq(other.deq) {}
+PmergeMe::PmergeMe(const PmergeMe& other) { 
+    *this = other; 
+}
 
-PmergeMe &PmergeMe::operator=(const PmergeMe &other)
-{
-    if (this != &other)
-    {
+PmergeMe& PmergeMe::operator=(const PmergeMe& other) {
+    if (this != &other) {
         vec = other.vec;
         deq = other.deq;
     }
@@ -23,15 +24,12 @@ PmergeMe &PmergeMe::operator=(const PmergeMe &other)
 
 PmergeMe::~PmergeMe() {}
 
-// Parse les arguments et stocke les valeurs dans les structures de données
-bool PmergeMe::parseArgs(int argc, char **argv)
-{
-    for (int i = 1; i < argc; i++)
-    {
+// ---------------------------- FONCTIONS UTILITAIRES --------------------------
+bool PmergeMe::parseArgs(int argc, char** argv) {
+    for (int i = 1; i < argc; ++i) {
         std::istringstream iss(argv[i]);
         int num;
-        if (!(iss >> num) || num < 0)
-        {
+        if (!(iss >> num) || num < 0) {
             std::cerr << "Error: Invalid input => " << argv[i] << std::endl;
             return false;
         }
@@ -41,219 +39,156 @@ bool PmergeMe::parseArgs(int argc, char **argv)
     return true;
 }
 
-// Affiche les éléments du vecteur
-void PmergeMe::printVector() const
-{
-    for (size_t i = 0; i < vec.size(); i++)
-    {
+void PmergeMe::printVector() const {
+    for (size_t i = 0; i < vec.size(); ++i)
         std::cout << vec[i] << " ";
-    }
     std::cout << std::endl;
 }
 
-// Affiche les éléments de la deque
-void PmergeMe::printDeque() const
-{
-    for (size_t i = 0; i < deq.size(); i++)
-    {
+void PmergeMe::printDeque() const {
+    for (size_t i = 0; i < deq.size(); ++i)
         std::cout << deq[i] << " ";
-    }
     std::cout << std::endl;
 }
+
+// ---------------------------- ALGORITHME PRINCIPAL --------------------------
 
 // Fonction de comparaison pour trier les paires
-bool comparePairs(const std::pair<int, int> &a, const std::pair<int, int> &b)
-{
+static bool comparePairs(const std::pair<int, int>& a, const std::pair<int, int>& b) {
     return a.first < b.first;
 }
 
-// Tri Ford-Johnson (Merge-Insertion Sort) - Version Vector
-void PmergeMe::fordJohnsonSortVector(std::vector<int> &v)
-{
-    if (v.size() <= 1)
-    {
-        return;
+// Génère la séquence de Jacobsthal
+static std::vector<size_t> generateJacobsthalSequence(size_t n) {
+    std::vector<size_t> seq;
+    if (n == 0) return seq;
+    seq.push_back(0);
+    if (n == 1) return seq;
+    
+    seq.push_back(1);
+    for (size_t i = 2; ; ++i) {
+        size_t next = seq[i-1] + 2 * seq[i-2];
+        if (next > n) break;
+        seq.push_back(next);
     }
-
-    // Étape 1: Créer des paires et les trier localement
-    std::vector<std::pair<int, int> > pairs;
-    for (size_t i = 0; i + 1 < v.size(); i += 2)
-    {
-        if (v[i] < v[i + 1])
-        {
-            pairs.push_back(std::make_pair(v[i], v[i + 1]));
-        }
-        else
-        {
-            pairs.push_back(std::make_pair(v[i + 1], v[i]));
-        }
-    }
-
-    // Étape 2: Trier les paires en fonction du premier élément (le plus petit)
-    std::sort(pairs.begin(), pairs.end(), comparePairs);
-
-    // Étape 3: Créer une séquence triée avec les premiers éléments de chaque paire
-    std::vector<int> sorted;
-    for (size_t i = 0; i < pairs.size(); i++)
-    {
-        sorted.push_back(pairs[i].first);
-    }
-
-    // Étape 4: Insérer les seconds éléments de chaque paire dans la séquence triée
-    for (size_t i = 0; i < pairs.size(); i++)
-    {
-        int value = pairs[i].second;
-        size_t left = 0;
-        size_t right = sorted.size();
-        while (left < right)
-        {
-            size_t mid = left + (right - left) / 2;
-            if (sorted[mid] < value)
-            {
-                left = mid + 1;
-            }
-            else
-            {
-                right = mid;
-            }
-        }
-        sorted.insert(sorted.begin() + left, value);
-    }
-
-    // Étape 5: Ajouter l'élément impair s'il existe
-    if (v.size() % 2 == 1)
-    {
-        int lastElement = v.back();
-        size_t left = 0;
-        size_t right = sorted.size();
-        while (left < right)
-        {
-            size_t mid = left + (right - left) / 2;
-            if (sorted[mid] < lastElement)
-            {
-                left = mid + 1;
-            }
-            else
-            {
-                right = mid;
-            }
-        }
-        sorted.insert(sorted.begin() + left, lastElement);
-    }
-
-    v = sorted; // Remplacer le vecteur original par le trié
+    return seq;
 }
 
-// Tri Ford-Johnson (Merge-Insertion Sort) - Version Deque
-void PmergeMe::fordJohnsonSortDeque(std::deque<int> &d)
-{
-    if (d.size() <= 1)
-    {
-        return;
-    }
+// Tri Ford-Johnson générique pour std::vector et std::deque
+template <typename Container>
+static void fordJohnsonSortGeneric(Container& c) {
+    if (c.size() <= 1) return;
 
-    // Étape 1: Créer des paires et les trier localement
-    std::deque<std::pair<int, int> > pairs;
-    for (size_t i = 0; i + 1 < d.size(); i += 2)
-    {
-        if (d[i] < d[i + 1])
-        {
-            pairs.push_back(std::make_pair(d[i], d[i + 1]));
-        }
+    typedef typename Container::value_type Val;
+    std::vector<std::pair<Val, Val> > pairs;
+    const bool has_odd = c.size() % 2;
+    const Val last = has_odd ? c.back() : Val();
+    const size_t limit = has_odd ? c.size() - 1 : c.size();
+
+    // Création des paires
+    for (size_t i = 0; i < limit; i += 2) {
+        if (c[i] < c[i+1])
+            pairs.push_back(std::make_pair(c[i], c[i+1]));
         else
-        {
-            pairs.push_back(std::make_pair(d[i + 1], d[i]));
-        }
+            pairs.push_back(std::make_pair(c[i+1], c[i]));
     }
 
-    // Étape 2: Trier les paires en fonction du premier élément (le plus petit)
+    // Tri des paires
     std::sort(pairs.begin(), pairs.end(), comparePairs);
 
-    // Étape 3: Créer une séquence triée avec les premiers éléments de chaque paire
-    std::deque<int> sorted;
-    for (size_t i = 0; i < pairs.size(); i++)
-    {
-        sorted.push_back(pairs[i].first);
+    // Construction de la chaine principale
+    Container main_chain;
+    for (size_t i = 0; i < pairs.size(); ++i)
+        main_chain.push_back(pairs[i].first);
+
+    // Séquence Jacobsthal optimisée
+    std::vector<size_t> jacob = generateJacobsthalSequence(pairs.size());
+    std::vector<bool> inserted(pairs.size(), false);
+
+    // Phase 1 : Insertion Jacobsthal
+    for (size_t i = 0; i < jacob.size(); ++i) {
+        const size_t pos = jacob[i];
+        if (pos >= pairs.size() || inserted[pos]) continue; // Évite les doublons
+        
+        const Val value = pairs[pos].second;
+        typename Container::iterator it = std::lower_bound(main_chain.begin(), main_chain.end(), value);
+        main_chain.insert(it, value);
+        inserted[pos] = true;
     }
 
-    // Étape 4: Insérer les seconds éléments de chaque paire dans la séquence triée
-    for (size_t i = 0; i < pairs.size(); i++)
-    {
-        int value = pairs[i].second;
-        size_t left = 0;
-        size_t right = sorted.size();
-        while (left < right)
-        {
-            size_t mid = left + (right - left) / 2;
-            if (sorted[mid] < value)
-            {
-                left = mid + 1;
-            }
-            else
-            {
-                right = mid;
-            }
+    // Phase 2 : Insertion restante
+    for (int i = pairs.size() - 1; i >= 0; --i) {
+        if (!inserted[i]) {
+            const Val value = pairs[i].second;
+            typename Container::iterator it = std::lower_bound(main_chain.begin(), main_chain.end(), value);
+            main_chain.insert(it, value);
         }
-        sorted.insert(sorted.begin() + left, value);
     }
 
-    // Étape 5: Ajouter l'élément impair s'il existe
-    if (d.size() % 2 == 1)
-    {
-        int lastElement = d.back();
-        size_t left = 0;
-        size_t right = sorted.size();
-        while (left < right)
-        {
-            size_t mid = left + (right - left) / 2;
-            if (sorted[mid] < lastElement)
-            {
-                left = mid + 1;
-            }
-            else
-            {
-                right = mid;
-            }
-        }
-        sorted.insert(sorted.begin() + left, lastElement);
+    // Élément impair
+    if (has_odd) {
+        typename Container::iterator it = std::lower_bound(main_chain.begin(), main_chain.end(), last);
+        main_chain.insert(it, last);
     }
 
-    d = sorted; // Remplacer la deque originale par le trié
+    c = main_chain;
 }
 
-// Trie et mesure le temps d'exécution pour le vecteur et la deque
-void PmergeMe::sortAndMeasureTime()
-{
+// Tri Ford-Johnson pour std::vector
+void PmergeMe::fordJohnsonSortVector(std::vector<int>& v) {
+    fordJohnsonSortGeneric(v);
+}
+
+// Tri Ford-Johnson pour std::deque
+void PmergeMe::fordJohnsonSortDeque(std::deque<int>& d) {
+    fordJohnsonSortGeneric(d);
+}
+
+// ---------------------------- MESURE PERFORMANCE ------------------------
+void PmergeMe::sortAndMeasureTime() {
+    const int iterations = 1000;
     std::clock_t start, end;
-    double timeVector, timeDeque;
-    const int iterations = 1000; // Nombre d'itérations
 
     std::cout << "Before: ";
     printVector();
 
-    // Mesure du temps pour std::vector
+    // Tri principal
+    std::vector<int> vec_copy = vec;
+    std::deque<int> deq_copy = deq;
+    
+    fordJohnsonSortVector(vec_copy);
+    fordJohnsonSortDeque(deq_copy);
+
+    // Affichage résultat
+    std::cout << "After:  ";
+    for (size_t i = 0; i < vec_copy.size(); ++i)
+        std::cout << vec_copy[i] << " ";
+    std::cout << std::endl;
+
+    // Mesure temps vector
     start = std::clock();
-    for (int i = 0; i < iterations; i++)
-    {
-        std::vector<int> vecCopy = vec; // Copie du vecteur pour ne pas modifier l'original
-        fordJohnsonSortVector(vecCopy);
+    for (int i = 0; i < iterations; ++i) {
+        std::vector<int> copy = vec;
+        fordJohnsonSortVector(copy);
     }
     end = std::clock();
-    timeVector = 1000000.0 * (end - start) / CLOCKS_PER_SEC / iterations; // Temps moyen en microsecondes
+    double vec_time = 1000000.0 * (end - start) / CLOCKS_PER_SEC / iterations;
 
-    std::cout << "After: ";
-    printVector();
-    std::cout << "Time to process a range of " << vec.size() << " elements with std::vector: " << std::fixed << std::setprecision(5) << timeVector << " us" << std::endl;
-
-    // Mesure du temps pour std::deque
+    // Mesure temps deque
     start = std::clock();
-    for (int i = 0; i < iterations; i++)
-    {
-        std::deque<int> deqCopy = deq; // Copie de la deque pour ne pas modifier l'original
-        fordJohnsonSortDeque(deqCopy);
+    for (int i = 0; i < iterations; ++i) {
+        std::deque<int> copy = deq;
+        fordJohnsonSortDeque(copy);
     }
     end = std::clock();
-    timeDeque = 1000000.0 * (end - start) / CLOCKS_PER_SEC / iterations; // Temps moyen en microsecondes
+    double deq_time = 1000000.0 * (end - start) / CLOCKS_PER_SEC / iterations;
 
-    std::cout << "Time to process a range of " << deq.size() << " elements with std::deque: " << std::fixed << std::setprecision(5) << timeDeque << " us" << std::endl;
+    // Affichage temps
+    std::cout << "Time to process a range of " << vec.size()
+              << " elements with std::vector : " 
+              << std::fixed << std::setprecision(5) << vec_time << " us\n"
+              << "Time to process a range of " << deq.size()
+              << " elements with std::deque  : "
+              << std::fixed << std::setprecision(5) << deq_time << " us" 
+              << std::endl;
 }
